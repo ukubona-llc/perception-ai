@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perception AI · Ukubona Evidence Layer</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="dark"] {
+    --bg: #0a0d12;
+    --bg2: #111520;
+    --bg3: #1a2030;
+    --border: rgba(255,255,255,0.07);
+    --border-accent: rgba(100,220,160,0.25);
+    --text: #d8dde8;
+    --text-dim: #6a7589;
+    --text-bright: #f0f4ff;
+    --accent: #3ecf8e;
+    --accent2: #6ee7b7;
+    --accent-glow: rgba(62,207,142,0.12);
+    --phase-color: #3ecf8e;
+    --tag-bg: rgba(62,207,142,0.07);
+    --tag-border: rgba(62,207,142,0.2);
+    --toggle-bg: #1a2030;
+    --card-shadow: 0 4px 40px rgba(0,0,0,0.5);
+  }
+  :root[data-theme="light"] {
+    --bg: #f2f5f0;
+    --bg2: #e8ede4;
+    --bg3: #dde4d8;
+    --border: rgba(0,0,0,0.08);
+    --border-accent: rgba(20,120,70,0.2);
+    --text: #252d28;
+    --text-dim: #8a9a8e;
+    --text-bright: #0a120d;
+    --accent: #1a7a4a;
+    --accent2: #2a9a62;
+    --accent-glow: rgba(26,122,74,0.08);
+    --phase-color: #1a7a4a;
+    --tag-bg: rgba(26,122,74,0.06);
+    --tag-border: rgba(26,122,74,0.18);
+    --toggle-bg: #d8e0d4;
+    --card-shadow: 0 4px 40px rgba(0,0,0,0.08);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Crimson Pro', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.4s, color 0.4s;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 3rem 2rem 6rem;
+  }
+
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 3.5rem;
+    gap: 1rem;
+  }
+
+  .breadcrumb {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.6rem;
+  }
+  .breadcrumb span { color: var(--accent); }
+
+  .layer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--tag-bg);
+    border: 1px solid var(--tag-border);
+    border-radius: 2px;
+    padding: 0.25rem 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  .layer-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    color: var(--text-bright);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  h1 em { font-style: italic; color: var(--accent2); }
+
+  .toggle {
+    flex-shrink: 0;
+    background: var(--toggle-bg);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.3s;
+    margin-top: 0.5rem;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    transition: transform 0.3s;
+  }
+  [data-theme="light"] .toggle::after { transform: translateX(20px); }
+
+  .phase-strip {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .phase-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .phase-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--phase-color);
+    background: var(--tag-bg);
+    border: 1px solid var(--tag-border);
+    padding: 0.2rem 0.5rem;
+    border-radius: 2px;
+  }
+  .algebra {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-left: auto;
+    letter-spacing: 0.05em;
+  }
+
+  .lead {
+    font-size: 1.25rem;
+    line-height: 1.7;
+    color: var(--text);
+    font-weight: 300;
+    margin-bottom: 2.5rem;
+    font-style: italic;
+  }
+
+  .section {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid var(--border);
+    animation: fadeUp 0.6s ease both;
+  }
+  .section:last-child { border-bottom: none; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .section:nth-child(1) { animation-delay: 0.1s; }
+  .section:nth-child(2) { animation-delay: 0.2s; }
+  .section:nth-child(3) { animation-delay: 0.3s; }
+  .section:nth-child(4) { animation-delay: 0.4s; }
+  .section:nth-child(5) { animation-delay: 0.5s; }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.7rem;
+  }
+  .section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: var(--text-bright);
+    margin-bottom: 0.9rem;
+    line-height: 1.3;
+  }
+  .section p {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: var(--text);
+    font-weight: 300;
+  }
+  .section p + p { margin-top: 0.8rem; }
+  .hl { color: var(--accent2); font-style: italic; }
+
+  .example-box {
+    margin-top: 1.2rem;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.2rem;
+    border-radius: 0 4px 4px 0;
+  }
+  .example-box .ex-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+  .example-box p { font-size: 0.95rem !important; line-height: 1.65 !important; }
+
+  /* Source grid */
+  .source-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+  .source-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 0.6rem 0.8rem;
+    border-radius: 4px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .source-item:hover { border-color: var(--tag-border); background: var(--tag-bg); }
+  .source-item .s-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-bottom: 0.2rem;
+  }
+  .source-item .s-desc {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+    font-family: 'Crimson Pro', serif;
+  }
+
+  .pill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--border-accent);
+    border-radius: 100px;
+    color: var(--text-dim);
+    background: var(--tag-bg);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .pill:hover { color: var(--accent); border-color: var(--accent); }
+
+  .foot-nav {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+  }
+  .nav-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: gap 0.2s;
+  }
+  .nav-link.prev::before { content: '←'; }
+  .nav-link.next::after { content: '→'; }
+  .nav-link.prev:hover { gap: 0.9rem; }
+  .nav-link.next:hover { gap: 0.9rem; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div>
+      <div class="breadcrumb">Ukubona · WHO India Evidence Synthesis · <span>Layer II</span></div>
+      <div class="layer-badge">Perception AI · Phase II · Matrix</div>
+      <h1><em>Perception</em> AI</h1>
+    </div>
+    <button class="toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
+  </div>
+
+  <div class="phase-strip">
+    <span class="phase-label">V4 Phase</span>
+    <span class="phase-tag">II · Matrix</span>
+    <span class="phase-tag">L₀+Σwᵢ·Lᵢ</span>
+    <span class="algebra">via PDF upload · web scraping · API integrations</span>
+  </div>
+
+  <p class="lead">The sensory apparatus of the pipeline — ingesting literature at scale across journals, languages, and grey sources, transforming scattered documents into a structured, queryable corpus.</p>
+
+  <div class="section">
+    <div class="section-label">What it is</div>
+    <h2>Targeted ingestion of specific literature</h2>
+    <p>Perception AI handles the <span class="hl">acquisition and structuring of documents</span> relevant to a specific research question. Unlike World AI, which understands everything broadly, Perception AI focuses on bringing specific literature into the pipeline — via PDF upload, web scraping, API integrations with journal databases, and connections to grey literature repositories.</p>
+    <p>The Matrix algebra (L₀+Σwᵢ·Lᵢ) reflects what this layer does: a base corpus (L₀) weighted by relevance scores across literature sources (Lᵢ), constructing the weighted document set that all subsequent phases operate on.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Sources it can reach</div>
+    <h2>Journals, languages, and grey sources — all three matter</h2>
+    <div class="source-grid">
+      <div class="source-item">
+        <div class="s-name">PubMed / MEDLINE</div>
+        <div class="s-desc">NCBI API integration; MeSH-structured retrieval</div>
+      </div>
+      <div class="source-item">
+        <div class="s-name">Embase</div>
+        <div class="s-desc">Drug and clinical trial indexing</div>
+      </div>
+      <div class="source-item">
+        <div class="s-name">EconLit</div>
+        <div class="s-desc">Health economics, cost-effectiveness literature</div>
+      </div>
+      <div class="source-item">
+        <div class="s-name">WHO IRIS</div>
+        <div class="s-desc">WHO grey literature, policy documents</div>
+      </div>
+      <div class="source-item">
+        <div class="s-name">NHSRC India</div>
+        <div class="s-desc">National health systems reports</div>
+      </div>
+      <div class="source-item">
+        <div class="s-name">Cochrane</div>
+        <div class="s-desc">Systematic review database</div>
+      </div>
+      <div class="source-item">
+        <div class="s-name">Non-English sources</div>
+        <div class="s-desc">Hindi, French, Portuguese repositories</div>
+      </div>
+      <div class="source-item">
+        <div class="s-name">PDF uploads</div>
+        <div class="s-desc">Direct document ingestion from local files</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Role in the pipeline</div>
+    <h2>Phase II — where the literature becomes data</h2>
+    <p>At Phase II (Matrix), Perception AI performs <span class="hl">Title/Abstract Screening</span> — working through the retrieved corpus to identify documents that survive the PICOS filter. This phase accounts for a significant share of the 60–70% of total review time that falls in the red steps.</p>
+    <p>The transformation here is from unstructured documents to a weighted relevance matrix — a set of documents with confidence scores, ready for Agentic AI to extract data from in Phase III.</p>
+    <div class="example-box">
+      <div class="ex-label">WHO India · Practical example</div>
+      <p>Reviewing PM-JAY's impact on catastrophic health expenditure: Perception AI ingests 2,400 retrieved records from four databases, screens titles and abstracts against inclusion criteria (India-specific, post-2018, quantitative CHE outcomes), and reduces the corpus to 140 full-text candidates — in the time a human team would process roughly 300 abstracts.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Key capability</div>
+    <h2>Language is not a barrier — it is a filter</h2>
+    <p>One of Perception AI's most underused capabilities in global health contexts is <span class="hl">multilingual ingestion</span>. Evidence on community health worker programmes in South Asia exists in Hindi, Tamil, Bengali, and regional government reports that never enter English-language indices. Perception AI can ingest, translate, and structure this material alongside English sources.</p>
+    <p>For WHO India evidence briefs, this means moving closer to complete evidence maps — not just what is indexed in the West, but what is documented in the system itself.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Limitations</div>
+    <h2>Garbage in — the quality of ingestion determines everything downstream</h2>
+    <p>Perception AI does not evaluate quality — it ingests and screens by surface features (title, abstract, metadata). A poorly constructed search strategy at Phase I produces a biased corpus that Perception AI will faithfully structure. The garbage-in problem is real: <span class="hl">ingestion fidelity is necessary but not sufficient</span> for a valid review.</p>
+  </div>
+
+  <div class="foot-nav">
+    <a class="nav-link prev" href="world-ai.html">World AI</a>
+    <a class="nav-link next" href="agentic-ai.html">Agentic AI</a>
+  </div>
+</div>
+
+<script>
+  function toggleTheme() {
+    const root = document.documentElement;
+    root.setAttribute('data-theme', root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  }
+</script>
+</body>
+</html>
